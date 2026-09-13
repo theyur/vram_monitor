@@ -90,6 +90,10 @@
             <Setter Property="ItemTemplate" Value="{StaticResource ConsumerTemplate}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+
+            <!-- Clicking the already-selected row deselects it. SelectionChanged cannot do this: it does
+                 not fire when the selected item is clicked again. -->
+            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="OnConsumerPreviewMouseDown" />
         </Style>
     </Window.Resources>
 
@@ -114,6 +118,11 @@
                                FontSize="10.5" Foreground="#FF8A94A6" Margin="0,2,0,0" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Only way back to the undimmed chart other than Esc or clicking the selected row
+                         again, so it is shown whenever a selection is actually in force. -->
+                    <Button Content="Show all lines" Click="OnClearSelection" Padding="12,5" Margin="0,0,8,0"
+                            ToolTip="Clear the selection and undim every line (Esc)"
+                            Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisible}}" />
                     <Button Content="Export…" Click="OnExport" Padding="12,5" Margin="0,0,8,0" />
                     <Button Content="Settings…" Click="OnSettings" Padding="12,5" />
                 </StackPanel>

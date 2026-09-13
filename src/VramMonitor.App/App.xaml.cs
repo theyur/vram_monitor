@@ -104,6 +104,13 @@ public partial class App : Application
                 new Uri("pack://application:,,,/Assets/app.ico", UriKind.Absolute)),
         };
 
+        // H.NotifyIcon 2.4.1 leaves UseStandardTooltip set even once a custom TrayToolTip has been resolved,
+        // so the icon keeps the NIF_SHOWTIP flag. The shell then draws the plain ToolTipText itself and never
+        // sends NIN_POPUPOPEN, which is the message the rich WPF tooltip opens on -- hovering showed only
+        // "VRAM Monitor". Clearing the flag before the icon is created hands tooltip display back to WPF.
+        // ToolTipText is deliberately kept as the fallback for shells that do not support the popup.
+        _tray.TrayIcon.UseStandardTooltip = false;
+
         _tray.TrayLeftMouseUp += (_, _) => ShowMainWindow();
         _tray.ForceCreate();
     }

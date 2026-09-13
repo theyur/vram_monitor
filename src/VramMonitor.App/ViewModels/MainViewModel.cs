@@ -44,9 +44,22 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasHiddenOtherRows;
 
+    /// <summary>
+    /// Raised once the consumer rows have been replaced, so the view can put the selection back.
+    /// </summary>
+    /// <remarks>
+    /// Every snapshot rebuilds both collections from scratch, which drops the list-box selection because the
+    /// rows are new objects. Without this the highlighted row vanished on the next sample while the chart
+    /// stayed dimmed, leaving a selection the user could see the effect of but not the cause.
+    /// </remarks>
+    public event EventHandler? RowsRebuilt;
+
     public ObservableCollection<ConsumerRow> Aggressive { get; } = [];
 
     public ObservableCollection<ConsumerRow> Other { get; } = [];
+
+    /// <summary>Whether one application is currently isolated on the chart.</summary>
+    public bool HasSelection => SelectedKey is not null;
 
     public MonitorSnapshot? Snapshot { get; private set; }
 
@@ -64,6 +77,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedKeyChanged(string? value)
     {
+        OnPropertyChanged(nameof(HasSelection));
         if (Snapshot is not null) Plot = ChartBuilder.Build(Snapshot, value, _expandedKeys);
     }
 
@@ -111,6 +125,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         OnPropertyChanged(nameof(AggressiveHeader));
         OnPropertyChanged(nameof(OtherHeader));
+
+        RowsRebuilt?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

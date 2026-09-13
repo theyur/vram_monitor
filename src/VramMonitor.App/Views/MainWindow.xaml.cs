@@ -48,14 +48,19 @@ public partial class MainWindow : Window
         Application.Current.Shutdown();
     }
 
-    /// <summary>Escape clears the selection, matching the "Show all lines" button.</summary>
+    /// <summary>
+    /// Escape undoes the narrowing that is in force, innermost first: a chart selection if there is one,
+    /// otherwise the window itself, which hides back to the tray exactly as closing it does.
+    /// </summary>
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(e);
 
-        if (e.Key == Key.Escape && _model.HasSelection)
+        if (e.Key == Key.Escape)
         {
-            ClearSelection();
+            if (_model.HasSelection) ClearSelection();
+            else Close();
+
             e.Handled = true;
         }
 

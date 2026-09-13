@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Plain net10.0 ON PURPOSE: this project physically cannot reference WPF, PDH or DXGI,
+       which is how spec 3.2 ("the rest of the application must not depend directly on
+       Windows/NVIDIA-specific structures") is enforced by the compiler rather than by convention. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="VramMonitor.Core.Tests" />
+  </ItemGroup>
+</Project>

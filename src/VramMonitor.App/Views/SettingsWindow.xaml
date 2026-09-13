@@ -1,0 +1,80 @@
+<Window x:Class="VramMonitor.App.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VRAM Monitor settings" Height="560" Width="500"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" Background="#FFFBFCFD">
+
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#FF2B3240" />
+            <Setter Property="Margin" Value="0,10,0,3" />
+        </Style>
+        <Style TargetType="TextBlock" x:Key="Hint">
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Foreground" Value="#FF8A94A6" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <TextBlock x:Name="ErrorText" Foreground="#FFC0392B" FontSize="11" VerticalAlignment="Center"
+                       Margin="0,0,12,0" TextWrapping="Wrap" MaxWidth="240" />
+            <Button Content="Cancel" Padding="16,6" Margin="0,0,8,0" IsCancel="True" />
+            <Button Content="Apply" Padding="16,6" IsDefault="True" Click="OnApply" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="GPU" Style="{StaticResource Label}" />
+                <ComboBox x:Name="GpuBox" DisplayMemberPath="Description" FontSize="12" Padding="6,4" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="Changing the GPU clears the monitoring history, which is held only in RAM." />
+
+                <TextBlock Text="Sample interval (seconds)" Style="{StaticResource Label}" />
+                <TextBox x:Name="IntervalBox" />
+                <TextBlock Style="{StaticResource Hint}" Text="How often the GPU is probed. Minimum 2 seconds." />
+
+                <TextBlock Text="History window (minutes)" Style="{StaticResource Label}" />
+                <TextBox x:Name="WindowBox" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="A consumer stays inspectable until its last sample falls outside this window. Shrinking it discards history immediately." />
+
+                <TextBlock Text="Monitoring floor (MB)" Style="{StaticResource Label}" />
+                <TextBox x:Name="FloorBox" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="Only applications above this take part in aggressive-consumer analysis. Applied at analysis time, so changing it re-evaluates the history already collected." />
+
+                <TextBlock Text="Aggressive duration threshold (minutes)" Style="{StaticResource Label}" />
+                <TextBox x:Name="AggressiveBox" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="Cumulative time in the top quartile before an application counts as aggressive." />
+
+                <TextBlock Text="Demotion grace period (seconds)" Style="{StaticResource Label}" />
+                <TextBox x:Name="GraceBox" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="How long an application stays listed as aggressive after it stops meeting the threshold." />
+
+                <TextBlock Text="Applications charted" Style="{StaticResource Label}" />
+                <TextBox x:Name="ChartTopBox" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="The highest-peak applications are plotted, plus whichever you select or expand. The rest stay in the list." />
+
+                <TextBlock Text="Hide 'Other consumers' below (MB)" Style="{StaticResource Label}" />
+                <TextBox x:Name="DisplayFloorBox" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="Display only: zero shows everything. Hidden consumers are still retained, analysed and exported." />
+
+                <CheckBox x:Name="AutostartBox" Content="Start with Windows" Margin="0,16,0,0" FontSize="12" />
+                <TextBlock Style="{StaticResource Hint}"
+                           Text="Starts minimised to the tray. Uses your own user account; no service is installed." />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

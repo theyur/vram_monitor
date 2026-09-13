@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- UI -->
+    <PackageVersion Include="OxyPlot.Wpf" Version="2.2.0" />
+    <PackageVersion Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <!-- Test: Microsoft.Testing.Platform only. xunit.v3 4.x enables MTP v2 by default, and MTP v2
+         refuses to run through the VSTest target on .NET 10 SDK (see global.json),
+         so neither Microsoft.NET.Test.Sdk nor xunit.runner.visualstudio is referenced. -->
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+</Project>

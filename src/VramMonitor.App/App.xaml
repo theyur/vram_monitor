@@ -1,0 +1,10 @@
+<Application x:Class="VramMonitor.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:VramMonitor.App">
+    <Application.Resources>
+        <local:EmptyToCollapsedConverter x:Key="EmptyToCollapsed" />
+        <local:BoolToVisibleConverter x:Key="BoolToVisible" />
+        <local:ExpansionConverter x:Key="ExpansionConverter" />
+    </Application.Resources>
+</Application>

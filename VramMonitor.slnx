@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VramMonitor.App/VramMonitor.App.csproj" />
+    <Project Path="src/VramMonitor.Core/VramMonitor.Core.csproj" />
+    <Project Path="src/VramMonitor.Windows/VramMonitor.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VramMonitor.Core.Tests/VramMonitor.Core.Tests.csproj" />
+    <Project Path="tests/VramMonitor.Windows.Tests/VramMonitor.Windows.Tests.csproj" />
+  </Folder>
+</Solution>

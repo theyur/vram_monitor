@@ -1,0 +1,38 @@
+<UserControl x:Class="VramMonitor.App.Tray.TrayTooltipView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tray="clr-namespace:VramMonitor.App.Tray"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=tray:TrayTooltipModel}">
+
+    <!-- A WPF tooltip rather than the Win32 one: NOTIFYICONDATA.szTip caps out at 127 characters,
+         which five name-and-value rows can exceed. -->
+    <Border Background="#FF1E2733" CornerRadius="6" Padding="12,10" MinWidth="230">
+        <StackPanel>
+            <TextBlock Text="Top VRAM consumers" Foreground="#FF9AA6B8" FontSize="10.5"
+                       FontWeight="SemiBold" Margin="0,0,0,6" />
+
+            <ItemsControl ItemsSource="{Binding Entries}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="170" />
+                            <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="#FF7DD3A0"
+                                       FontSize="12" FontWeight="SemiBold" Margin="12,0,0,0" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="{Binding Footer}" Foreground="#FF8A94A6" FontSize="10" Margin="0,7,0,0"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <AssemblyName>VramMonitor</AssemblyName>
+    <RootNamespace>VramMonitor.App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Also embedded as a resource so the tray icon can be loaded via a pack:// URI at runtime. -->
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OxyPlot.Wpf" />
+    <PackageReference Include="H.NotifyIcon.Wpf" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VramMonitor.Core\VramMonitor.Core.csproj" />
+    <ProjectReference Include="..\VramMonitor.Windows\VramMonitor.Windows.csproj" />
+  </ItemGroup>
+
+</Project>

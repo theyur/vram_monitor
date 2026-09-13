@@ -92,6 +92,27 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
+    /// <summary>
+    /// Sends the wheel to the scroll viewer that actually owns the scrolling.
+    /// </summary>
+    /// <remarks>
+    /// Taken in the tunnelling phase so the list box's own scroll viewer never sees the event: it cannot
+    /// scroll -- the list is laid out at full height inside the outer viewer -- yet it would still mark the
+    /// event handled and swallow it.
+    /// </remarks>
+    private void OnConsumerListMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        ArgumentNullException.ThrowIfNull(e);
+
+        if (e.Handled || sender is not DependencyObject list) return;
+
+        // Walks up, so this finds the enclosing viewer and not the list box's own, which is a descendant.
+        if (FindAncestor<ScrollViewer>(list) is not { } scroller) return;
+
+        scroller.ScrollToVerticalOffset(scroller.VerticalOffset - e.Delta);
+        e.Handled = true;
+    }
+
     private void OnClearSelection(object sender, RoutedEventArgs e) => ClearSelection();
 
     private void ClearSelection()

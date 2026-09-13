@@ -94,6 +94,11 @@
             <!-- Clicking the already-selected row deselects it. SelectionChanged cannot do this: it does
                  not fire when the selected item is clicked again. -->
             <EventSetter Event="PreviewMouseLeftButtonDown" Handler="OnConsumerPreviewMouseDown" />
+
+            <!-- Both lists sit in the StackPanel of one outer ScrollViewer, so they are laid out at full
+                 height and never scroll themselves, yet their own ScrollViewer still marks the wheel event
+                 handled. That left the wheel dead, with the scrollbar the only way to move. -->
+            <EventSetter Event="PreviewMouseWheel" Handler="OnConsumerListMouseWheel" />
         </Style>
     </Window.Resources>
 

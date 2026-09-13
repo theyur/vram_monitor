@@ -1,0 +1,69 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.VC.opendb
+
+# JetBrains Rider / IntelliJ
+.idea/
+*.sln.iml
+.idea_modules/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Test results / coverage
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage.*
+
+# NuGet / packages
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# Publish / generated output
+publish/
+*.pubxml.user
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.userprefs
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+secrets.json
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# VS Code local workspace settings
+.vscode/
+
+# Generated crash dumps
+*.dmp
+*.mdmp

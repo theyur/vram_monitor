@@ -27,9 +27,9 @@ No elevation is required, and nothing is installed: it is a single desktop proce
 database and no background agent. Monitoring history lives **only in RAM** and is discarded when the
 application exits, unless you export it first.
 
-The application lives in the system tray. Hovering the tray icon shows the current top five consumers;
-clicking it opens the main window. Closing the main window hides it back to the tray — use **Exit** on the
-tray menu to quit.
+The application lives in the system tray. Hovering the tray icon shows the current top five consumers and,
+on the last row, the adapter total; clicking it opens the main window. Closing the main window hides it back
+to the tray — use **Exit** on the tray menu to quit.
 
 ### Command-line overrides
 
@@ -97,7 +97,9 @@ floor. "Other" is everything else still retained — quiet applications, ones th
 aggressive a while ago, and ones that have already exited but whose samples are still inside the window.
 
 Any retained consumer can be selected, which highlights its line and dims the rest, and expanded, which
-reveals its individual processes and overlays their lines.
+reveals its individual processes and overlays their lines. Clicking the selected row again, pressing
+<kbd>Esc</kbd>, or the **Show all lines** button that appears while something is selected brings every line
+back.
 
 Chart markers:
 

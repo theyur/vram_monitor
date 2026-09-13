@@ -186,9 +186,10 @@ None. .NET 10 is already installed, the performance counters are present, and no
 
 These are the things I could not verify without a human at the keyboard:
 
-1. **Tray tooltip on hover.** I rendered the control offscreen and it is correct, but Win11 hover behaviour
-   itself is unverified. If it misbehaves, the fallback is plain `ToolTipText`; five rows fit inside the
-   127-character Win32 limit.
+1. ~~**Tray tooltip on hover.**~~ **Done, and it was broken** — see section 13. Offscreen rendering said the
+   control was correct, which it was; what was wrong was that the shell never displayed it. The fallback I
+   was relying on, plain `ToolTipText`, was the very thing that hid the defect: it rendered instead, so the
+   tooltip looked like it worked.
 2. **Tray left-click** opens the window; **Exit** quits.
 3. **Settings dialog**: change the history window, the threshold and the chart size, click Apply, and confirm
    the lists and chart re-evaluate immediately without a restart.
@@ -197,7 +198,8 @@ These are the things I could not verify without a human at the keyboard:
    integration-tested, but the checkbox path is not.
 5. **Export…**: the file dialog path. The exporters themselves are tested against real data.
 6. **Selection and expansion**: click a consumer (its line highlights, others dim), expand it (per-process
-   detail appears and PID lines overlay).
+   detail appears and PID lines overlay). Selection is **done** — and was broken; see section 13. Expansion
+   is still unverified.
 7. **A real workload**: start a training run or a game, confirm it climbs the list and becomes aggressive,
    then close it and confirm its line ends without an error marker and it stays inspectable until its last
    sample ages out.
@@ -327,3 +329,46 @@ that looked reasonable in isolation:
   system processes are permanently unreadable and permanently present.
 
 The full reports and dispositions are in `.claude/plans/`, including the four Critic reports.
+
+---
+
+## 13. What the manual checks found
+
+Sections 1–12 were written before any human had used the application interactively. Two of the manual checks
+in section 7 were then run — the tooltip and selection — and **both found a defect**. A third defect, the
+mouse wheel, turned up in ordinary use and was not on the list at all. All three are fixed and verified
+against the running application.
+
+**The tray tooltip never appeared.** Hovering showed only the fallback string. H.NotifyIcon 2.4.1 does not
+clear `UseStandardTooltip` when a custom `TrayToolTip` is resolved, so the icon keeps `NIF_SHOWTIP`; the
+shell then draws `ToolTipText` itself and stops sending `NIN_POPUPOPEN`, the message the WPF popup opens on.
+Upstream fixed this after 2.4.1. The flag is now cleared before the icon is created.
+
+**A selected application could not be deselected.** Nothing ever assigned `SelectedKey` null, so the chart
+stayed dimmed for the rest of the session. Behind it sat a second defect: each snapshot replaces both row
+collections, so the list-box selection was dropped every interval and the highlighted row vanished while the
+chart stayed dimmed — a selection whose effect was visible but whose cause was not. Clicking the selected row
+again, Escape, and a **Show all lines** button now clear it, and the highlight is restored after each rebuild.
+
+**The mouse wheel did not scroll the consumer lists.** Both lists sit in the `StackPanel` of one outer
+`ScrollViewer`, so they are laid out at full height and never scroll themselves, yet their own `ScrollViewer`
+still marks the wheel event handled. The wheel is now taken in the tunnelling phase and forwarded to the
+enclosing viewer.
+
+The tooltip also gained the adapter total as a last row, replacing a "click to open" hint.
+
+### What this says about the validation in sections 4 and 5
+
+Every one of these is a UI-layer defect, and the UI layer is the one surface with no automated tests — a
+deliberate choice recorded in the plan, on the grounds that it holds no logic. That reasoning was sound and
+the outcome still poor: three of the first three checks run by a human failed. The tooltip case is the
+sharpest, because section 7 recorded the control as rendering correctly offscreen. It did. The rendering was
+never the part that was broken, and offscreen rendering could not have told me so.
+
+Two of the three were also invisible to my own attempts at verification: synthetic mouse input could not
+reach the Win11 tray flyout, and z-order silently swallowed injected wheel events, so an automated check
+would have reported "no change" whether the fix worked or not. Both were settled by a human moving the mouse
+while the application logged what it received.
+
+The list was also incomplete: wheel scrolling was not on it, and nothing on it would have caught that.
+Checks 2, 3, 4, 5, 7 and 8, and the expansion half of check 6, have not been run as part of this work.

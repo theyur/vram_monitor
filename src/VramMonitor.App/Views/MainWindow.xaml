@@ -27,7 +27,9 @@
         <!-- One row template drives both lists, so Aggressive and Other stay visually identical:
              the only difference between them is classification, not importance. -->
         <DataTemplate x:Key="ConsumerTemplate" DataType="{x:Type vm:ConsumerRow}">
-            <Border Padding="8,6" Margin="0,1" CornerRadius="4" Background="Transparent">
+            <!-- Tight vertical padding: the list is meant to be scanned, and a long one is easier to read
+                 whole than to scroll. The 1px margin stays so selected rows do not touch. -->
+            <Border Padding="8,3" Margin="0,1" CornerRadius="4" Background="Transparent">
                 <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -89,6 +91,16 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="ItemTemplate" Value="{StaticResource ConsumerTemplate}" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+
+            <!-- The container adds its own padding on top of the row's. The row template owns the spacing,
+                 so the container contributes none. -->
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
 
             <!-- Clicking the already-selected row deselects it. SelectionChanged cannot do this: it does

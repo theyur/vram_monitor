@@ -22,7 +22,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+                            <!-- Left, not the default stretch: with a MaxWidth, stretch centres the name
+                                 inside a wider column, so the list drifted right whenever the total row
+                                 below made the tooltip wider than the names. -->
                             <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12"
+                                       HorizontalAlignment="Left"
                                        TextTrimming="CharacterEllipsis" MaxWidth="170" />
                             <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="#FF7DD3A0"
                                        FontSize="12" FontWeight="SemiBold" Margin="12,0,0,0" />
@@ -31,8 +35,21 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Text="{Binding Footer}" Foreground="#FF8A94A6" FontSize="10" Margin="0,7,0,0"
-                       TextWrapping="Wrap" />
+            <!-- The adapter total as one more row of the same table, so its figure lines up with the
+                 consumers above it. Deliberately left in the footer grey rather than the row colours: it is
+                 read from the adapter counter and is not the sum of the rows, so it must not read as just
+                 another consumer. The label doubles as the status line when there is nothing to list,
+                 which is why it still wraps. -->
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Footer}" Foreground="#FF8A94A6" FontSize="12"
+                           TextWrapping="Wrap" MaxWidth="260" />
+                <TextBlock Grid.Column="1" Text="{Binding TotalValue}" Foreground="#FF8A94A6" FontSize="12"
+                           FontWeight="SemiBold" Margin="12,0,0,0" VerticalAlignment="Top" />
+            </Grid>
         </StackPanel>
     </Border>
 </UserControl>

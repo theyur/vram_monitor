@@ -15,7 +15,14 @@ public partial class SettingsWindow : Window
 {
     private readonly IReadOnlyList<GpuInfo> _adapters;
 
-    public SettingsWindow(MonitorSettings settings, IReadOnlyList<GpuInfo> adapters, GpuInfo? current)
+    /// <param name="startWithWindows">
+    /// The autostart state as it actually is, read from the registry rather than taken from
+    /// <paramref name="settings"/>. The two can disagree: the Run entry can be removed from outside the
+    /// application -- Task Manager's Startup apps tab does exactly that -- and the settings file would then
+    /// still claim it was on, leaving the box ticked for something that no longer exists.
+    /// </param>
+    public SettingsWindow(
+        MonitorSettings settings, IReadOnlyList<GpuInfo> adapters, GpuInfo? current, bool startWithWindows)
     {
         ArgumentNullException.ThrowIfNull(settings);
         _adapters = adapters ?? throw new ArgumentNullException(nameof(adapters));
@@ -33,7 +40,7 @@ public partial class SettingsWindow : Window
         GraceBox.Text = Text(settings.DemotionGracePeriod.TotalSeconds);
         ChartTopBox.Text = Text(settings.ChartTopApplications);
         DisplayFloorBox.Text = Text(settings.OtherListDisplayFloorBytes / (double)MonitorSettings.BytesPerMegabyte);
-        AutostartBox.IsChecked = settings.StartWithWindows;
+        AutostartBox.IsChecked = startWithWindows;
 
         Original = settings;
     }

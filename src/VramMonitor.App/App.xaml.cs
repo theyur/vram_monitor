@@ -271,7 +271,11 @@ public partial class App : Application
         if (_sampler is null) return;
         ShowMainWindow();
 
-        var dialog = new SettingsWindow(_settings, _adapters.Enumerate(), _gpu) { Owner = _window };
+        // The checkbox reads the Run key, not the settings file, so it shows what is actually registered.
+        var dialog = new SettingsWindow(_settings, _adapters.Enumerate(), _gpu, _autostart.IsEnabled())
+        {
+            Owner = _window,
+        };
         if (dialog.ShowDialog() != true || dialog.Result is not { } result) return;
 
         _settings = result.Settings;

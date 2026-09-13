@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using VramMonitor.Core.Model;
 using VramMonitor.Windows.Dxgi;
 using VramMonitor.Windows.Pdh;
@@ -187,5 +188,32 @@ public sealed class AutostartIntegrationTests
         }
 
         Assert.False(manager.IsEnabled());
+    }
+
+    [Fact]
+    public void An_entry_removed_from_outside_the_application_is_reported_as_absent()
+    {
+        // What the settings checkbox depends on: Task Manager's Startup apps tab deletes the value without
+        // telling us, so the state has to be read back from the key rather than remembered.
+        string valueName = $"VramMonitorTest_{Guid.NewGuid():N}";
+        var manager = new AutostartManager(valueName);
+
+        try
+        {
+            Assert.Null(manager.Set(true, @"C:\apps\VramMonitor.exe"));
+            Assert.True(manager.IsEnabled());
+
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true))
+            {
+                key.DeleteValue(valueName, throwOnMissingValue: true);
+            }
+
+            Assert.False(manager.IsEnabled());
+        }
+        finally
+        {
+            manager.Set(false, @"C:\apps\VramMonitor.exe");
+        }
     }
 }

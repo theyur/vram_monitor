@@ -16,10 +16,23 @@ public sealed class AutostartManager(string valueName = "VramMonitor")
 
     private readonly string _valueName = valueName;
 
+    /// <summary>Whether the Run entry exists. Reports false when the key cannot be read at all.</summary>
+    /// <remarks>
+    /// This is called while opening the settings dialog, so a locked-down machine that denies the read must
+    /// not stop the dialog appearing. Reporting false is the safe way to be wrong: the box shows unticked,
+    /// and ticking it calls <see cref="Set"/>, which surfaces the same denial as a message the user can read.
+    /// </remarks>
     public bool IsEnabled()
     {
-        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: false);
-        return key?.GetValue(_valueName) is not null;
+        try
+        {
+            using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: false);
+            return key?.GetValue(_valueName) is not null;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Adds or removes the entry. Returns null on success, or a message describing the failure.</summary>

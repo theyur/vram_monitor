@@ -1,9 +1,10 @@
 # DPI-aware screenshot of the running app.
 #
-# Without SetProcessDPIAware, GetWindowRect returns logically-scaled coordinates on a
-# high-DPI display and CopyFromScreen then grabs the wrong region -- you get a picture of
-# whatever is up and to the left of the real window. That is the whole reason this script
-# exists rather than a two-line inline capture.
+# Getting the DPI mode right is the whole reason this script exists rather than a two-line
+# inline capture. Without it, GetWindowRect and CopyFromScreen disagree about what a coordinate
+# means: you get a picture of whatever sits up and to the left of the real window, and on a
+# multi-monitor desktop with mixed scaling, a region half again too large. See the
+# SetThreadDpiAwarenessContext call below for why it has to be per-thread.
 #
 #   .\screenshot.ps1 -Out shot.png                 # maximize, capture whole screen (most reliable)
 #   .\screenshot.ps1 -Out shot.png -WindowOnly     # capture just the window rect, leave size alone
@@ -21,6 +22,7 @@ using System;
 using System.Runtime.InteropServices;
 public class ShotNative {
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+    [DllImport("user32.dll")] public static extern IntPtr SetThreadDpiAwarenessContext(IntPtr ctx);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int n);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
@@ -28,7 +30,16 @@ public class ShotNative {
 }
 '@
 
-[ShotNative]::SetProcessDPIAware() | Out-Null
+# Per-monitor awareness has to be set on the THREAD, not the process. pwsh.exe already declares
+# SYSTEM_AWARE in its manifest, so SetProcessDPIAware is a silent no-op -- and a system-aware
+# process is told one DPI for the whole desktop, the primary monitor's. Windows then virtualizes
+# every other monitor's geometry by systemDPI/monitorDPI, so a 1920x1080 display next to a 4K
+# primary at 150% is reported as 2880x1620 and the capture region comes out half again too large.
+# -4 is DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2; the call returns the previous context, or NULL
+# on a Windows older than 1703, where the process-wide call is the best available.
+if ([ShotNative]::SetThreadDpiAwarenessContext([IntPtr](-4)) -eq [IntPtr]::Zero) {
+    [ShotNative]::SetProcessDPIAware() | Out-Null
+}
 
 $proc = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue
 if (-not $proc) { throw "$ProcessName is not running." }

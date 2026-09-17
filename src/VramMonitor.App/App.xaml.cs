@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Threading;
 using System.Windows;
 using H.NotifyIcon;
 using Microsoft.Win32;
@@ -72,7 +67,7 @@ public partial class App : Application
         string? startupProblem = loaded.Problem;
 
         var provider = new PdhGpuMemoryProvider(_adapters);
-        startupProblem ??= provider.CheckAvailability();
+        startupProblem ??= PdhGpuMemoryProvider.CheckAvailability();
 
         IReadOnlyList<GpuInfo> available = _adapters.Enumerate();
         GpuResolution resolution = GpuSelectorResolver.Resolve(available, _settings.SelectedGpu);

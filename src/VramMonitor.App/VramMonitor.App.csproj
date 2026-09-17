@@ -15,6 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="VramMonitor.App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="OxyPlot.Wpf" />
     <PackageReference Include="H.NotifyIcon.Wpf" />
     <PackageReference Include="CommunityToolkit.Mvvm" />

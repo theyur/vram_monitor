@@ -1,6 +1,4 @@
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VramMonitor.App.Formatting;

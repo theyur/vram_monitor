@@ -1,6 +1,5 @@
 using VramMonitor.Core.History;
 using VramMonitor.Core.Model;
-using VramMonitor.Core.Tests.Support;
 using Xunit;
 using static VramMonitor.Core.Tests.Support.Build;
 

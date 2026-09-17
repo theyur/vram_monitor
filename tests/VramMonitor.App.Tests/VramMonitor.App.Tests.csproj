@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <!-- Referencing the app pulls in OxyPlot.Wpf, so this project needs the WPF targets too. -->
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\VramMonitor.App\VramMonitor.App.csproj" />
+    <ProjectReference Include="..\..\src\VramMonitor.Core\VramMonitor.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -25,7 +25,6 @@ namespace VramMonitor.Core.Sampling;
 public sealed class SamplerService : IAsyncDisposable
 {
     private readonly IGpuMemoryProvider _provider;
-    private readonly IProcessMetadataResolver _metadata;
     private readonly IClock _clock;
     private readonly RollingHistoryStore _store = new();
     private readonly ProcessSessionTracker _tracker;
@@ -63,10 +62,10 @@ public sealed class SamplerService : IAsyncDisposable
         IClock? clock = null)
     {
         _provider = provider ?? throw new ArgumentNullException(nameof(provider));
-        _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+        ArgumentNullException.ThrowIfNull(metadata);
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _clock = clock ?? SystemClock.Instance;
-        _tracker = new ProcessSessionTracker(_metadata);
+        _tracker = new ProcessSessionTracker(metadata);
 
         _anchorWall = _clock.UtcNow;
         _anchorMonotonic = _clock.MonotonicTicks;

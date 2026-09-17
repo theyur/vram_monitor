@@ -35,7 +35,7 @@ public sealed class PdhGpuMemoryProvider(IGpuAdapterEnumerator adapters) : IGpuM
         Task.FromResult(_adapters.Enumerate());
 
     /// <summary>Checks that the counter objects exist at all, for a clear startup error (spec section 16.3).</summary>
-    public string? CheckAvailability()
+    public static string? CheckAvailability()
     {
         nint query = 0;
         try
@@ -54,7 +54,7 @@ public sealed class PdhGpuMemoryProvider(IGpuAdapterEnumerator adapters) : IGpuM
         }
         finally
         {
-            if (query != 0) PdhInterop.PdhCloseQuery(query);
+            if (query != 0) _ = PdhInterop.PdhCloseQuery(query);
         }
     }
 
@@ -95,7 +95,7 @@ public sealed class PdhGpuMemoryProvider(IGpuAdapterEnumerator adapters) : IGpuM
         }
         finally
         {
-            if (query != 0) PdhInterop.PdhCloseQuery(query);
+            if (query != 0) _ = PdhInterop.PdhCloseQuery(query);
         }
     }
 
@@ -255,13 +255,12 @@ public sealed class PdhGpuMemoryProvider(IGpuAdapterEnumerator adapters) : IGpuM
     private CounterArray ReadArray(nint counter, bool available)
     {
         if (!available) return CounterArray.Missing;
-        return TryReadArray(counter, out List<CounterItem> items, out _) ? CounterArray.Of(items) : CounterArray.Unreadable;
+        return TryReadArray(counter, out List<CounterItem> items) ? CounterArray.Of(items) : CounterArray.Unreadable;
     }
 
-    private unsafe bool TryReadArray(nint counter, out List<CounterItem> items, out uint error)
+    private unsafe bool TryReadArray(nint counter, out List<CounterItem> items)
     {
         items = [];
-        error = 0;
 
         while (true)
         {
@@ -279,7 +278,7 @@ public sealed class PdhGpuMemoryProvider(IGpuAdapterEnumerator adapters) : IGpuM
                     continue;
                 }
 
-                if (status != 0) { error = status; return false; }
+                if (status != 0) return false;
 
                 var result = new List<CounterItem>((int)count);
                 var entries = (PdhFormattedItem*)pointer;

@@ -32,7 +32,7 @@ public sealed class GpuProviderIntegrationTests
         Assert.SkipWhen(discrete is null, "No adapter with dedicated video memory.");
 
         // WMI's AdapterRAM is a 32-bit field and overflows above 4 GB; DXGI must not.
-        Assert.True(discrete!.DedicatedVideoMemoryBytes > 0);
+        Assert.True(discrete.DedicatedVideoMemoryBytes > 0);
         Assert.StartsWith("luid_0x", discrete.Id.Luid, StringComparison.Ordinal);
         Assert.False(string.IsNullOrWhiteSpace(discrete.Description));
     }
@@ -40,7 +40,7 @@ public sealed class GpuProviderIntegrationTests
     [Fact]
     public void The_counter_objects_this_application_needs_are_present()
     {
-        string? problem = new PdhGpuMemoryProvider(Adapters).CheckAvailability();
+        string? problem = PdhGpuMemoryProvider.CheckAvailability();
         Assert.SkipWhen(problem is not null, problem ?? string.Empty);
         Assert.Null(problem);
     }
@@ -52,7 +52,7 @@ public sealed class GpuProviderIntegrationTests
         Assert.SkipWhen(gpu is null, "No usable GPU.");
 
         var provider = new PdhGpuMemoryProvider(Adapters);
-        GpuSnapshot snapshot = await provider.GetSnapshotAsync(gpu!.Id, TestContext.Current.CancellationToken);
+        GpuSnapshot snapshot = await provider.GetSnapshotAsync(gpu.Id, TestContext.Current.CancellationToken);
 
         Assert.SkipWhen(snapshot.Outcome == ProbeOutcome.Failed, $"Probe failed: {snapshot.FailureReason}");
 
@@ -71,7 +71,7 @@ public sealed class GpuProviderIntegrationTests
         Assert.SkipWhen(gpu is null, "No usable GPU.");
 
         var provider = new PdhGpuMemoryProvider(Adapters);
-        await provider.GetSnapshotAsync(gpu!.Id, TestContext.Current.CancellationToken);   // warm up
+        await provider.GetSnapshotAsync(gpu.Id, TestContext.Current.CancellationToken);   // warm up
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         for (int i = 0; i < 20; i++)
@@ -144,7 +144,7 @@ public sealed class ProcessMetadataIntegrationTests
     {
         Core.Abstractions.ProcessTimes? times = resolver.GetTimes(pid);
         Assert.NotNull(times);
-        Assert.NotEqual(0, times!.Value.CreationTicks);
+        Assert.NotEqual(0, times.Value.CreationTicks);
     }
 
     [Fact]

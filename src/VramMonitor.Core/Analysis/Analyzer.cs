@@ -14,10 +14,10 @@ namespace VramMonitor.Core.Analysis;
 /// 19.1 be covered without a GPU.
 /// </para>
 /// <para>
-/// <b>Two horizons.</b> <paramref name="retained"/> spans <c>HistoryWindow + DemotionGracePeriod</c>. Only the
-/// <em>visible</em> window defines which consumers exist and every figure displayed; the older grace tail is
-/// read solely by the demotion-hysteresis predicate, which can keep a consumer in the aggressive list but can
-/// never introduce one.
+/// <b>Two horizons.</b> The <c>retained</c> parameter of <see cref="Analyze"/> spans
+/// <c>HistoryWindow + DemotionGracePeriod</c>. Only the <em>visible</em> window defines which consumers exist
+/// and every figure displayed; the older grace tail is read solely by the demotion-hysteresis predicate,
+/// which can keep a consumer in the aggressive list but can never introduce one.
 /// </para>
 /// </remarks>
 public static class Analyzer
@@ -366,7 +366,7 @@ public static class Analyzer
         return views;
     }
 
-    private static IReadOnlyList<SeriesPoint> BuildSeries(
+    private static List<SeriesPoint> BuildSeries(
         AppTrack track, IReadOnlyList<GpuSample> samples, int visibleStart)
     {
         var points = new List<SeriesPoint>(samples.Count - visibleStart);
@@ -389,7 +389,7 @@ public static class Analyzer
     /// application present both before and immediately after a two-hour sleep would otherwise be drawn with a
     /// straight line straight across the gap -- interpolation that spec section 13.1 forbids.
     /// </remarks>
-    private static IReadOnlyList<SeriesPoint> InjectSamplingGaps(
+    private static List<SeriesPoint> InjectSamplingGaps(
         List<SeriesPoint> points, IReadOnlyList<GpuSample> samples, int visibleStart)
     {
         List<SeriesPoint>? result = null;

@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Windows;
 using VramMonitor.Core.Configuration;
 using VramMonitor.Core.Model;
@@ -13,8 +10,9 @@ public sealed record SettingsResult(MonitorSettings Settings, GpuInfo? Gpu, bool
 
 public partial class SettingsWindow : Window
 {
-    private readonly IReadOnlyList<GpuInfo> _adapters;
-
+    /// <param name="settings">The settings to show, already validated.</param>
+    /// <param name="adapters">The adapters to offer in the GPU list.</param>
+    /// <param name="current">The adapter currently selected, or null when none resolved.</param>
     /// <param name="startWithWindows">
     /// The autostart state as it actually is, read from the registry rather than taken from
     /// <paramref name="settings"/>. The two can disagree: the Run entry can be removed from outside the
@@ -25,13 +23,13 @@ public partial class SettingsWindow : Window
         MonitorSettings settings, IReadOnlyList<GpuInfo> adapters, GpuInfo? current, bool startWithWindows)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        _adapters = adapters ?? throw new ArgumentNullException(nameof(adapters));
+        ArgumentNullException.ThrowIfNull(adapters);
 
         InitializeComponent();
 
         GpuBox.ItemsSource = adapters;
         GpuBox.SelectedItem = adapters.FirstOrDefault(a => current is not null && a.Id == current.Id)
-                              ?? adapters.FirstOrDefault();
+                              ?? (adapters.Count > 0 ? adapters[0] : null);
 
         IntervalBox.Text = Text(settings.SampleInterval.TotalSeconds);
         WindowBox.Text = Text(settings.HistoryWindow.TotalMinutes);

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
@@ -117,11 +115,27 @@ public static class ChartBuilder
     private static void AddAxes(PlotModel model, MonitorSnapshot snapshot)
     {
         DateTimeOffset end = snapshot.TakenUtc.ToLocalTime();
-        DateTimeOffset start = end - snapshot.Settings.HistoryWindow;
+        TimeSpan window = snapshot.Settings.HistoryWindow;
+        DateTimeOffset start = end - window;
 
-        // Minutes alone repeat themselves on a short window, so seconds are shown when the whole window is
-        // only a few minutes wide.
-        string timeFormat = snapshot.Settings.HistoryWindow <= TimeSpan.FromMinutes(10) ? "HH:mm:ss" : "HH:mm";
+        // The tick step is pinned rather than left to OxyPlot, because OxyPlot derives it from the plot
+        // area's pixel width -- Axis.UpdateIntervals calls DateTimeAxis.CalculateActualInterval, which
+        // budgets IntervalLength (60px) per label -- and that width is not constant even when the window
+        // is. The left value axis has an automatic Maximum, so its widest label grows from "500" to "12288"
+        // as data arrives and takes about nine more pixels from the plot, and the outside legend re-flows as
+        // the charted series set changes. For a ten-minute window OxyPlot's own boundary sits at exactly
+        // 660px of plot area, so a few pixels of drift flipped the labels between a two-minute and a
+        // one-minute step on successive refreshes at an unchanged window size. A step chosen from the
+        // history window alone cannot do that.
+        //
+        // What this gives up is OxyPlot's automatic overlap protection, which is why TimeAxisStep targets at
+        // most six labels and why the format below drops the seconds as soon as they are constant.
+        TimeSpan step = TimeAxisStep.For(window);
+
+        // Seconds earn their width only while the step is finer than a minute. At coarser steps every label
+        // would end in the same ":00" -- about 15px per label spent on nothing, and enough to make the
+        // labels of a six-to-ten-minute window collide at the chart column's MinWidth.
+        string timeFormat = step < TimeSpan.FromMinutes(1) ? "HH:mm:ss" : "HH:mm";
 
         // Zoom and pan are deliberately off: spec section 12.3 puts them out of scope for v1.
         model.Axes.Add(new DateTimeAxis
@@ -130,6 +144,20 @@ public static class ChartBuilder
             StringFormat = timeFormat,
             Minimum = DateTimeAxis.ToDouble(start.DateTime),
             Maximum = DateTimeAxis.ToDouble(end.DateTime),
+
+            // A DateTimeAxis carries its values as days since an epoch, so a step is a number of DAYS.
+            // Setting it makes Axis.UpdateIntervals skip CalculateActualInterval entirely, which is the
+            // whole point. IntervalType is therefore never consulted -- DateTimeAxis only reads it inside
+            // the method that no longer runs -- so setting it would be inert; StringFormat above is still
+            // honoured, because ActualStringFormat is assigned independently of the step.
+            MajorStep = step.TotalDays,
+
+            // Matching the major step is what the automatic path already did for every interval type this
+            // window range can reach, and minor ticks coinciding with major ones are dropped, so the axis
+            // line stays free of intermediate marks. Leave this unset and OxyPlot falls back to a fifth of
+            // the major step, putting twenty tick marks on an axis that has none today.
+            MinorStep = step.TotalDays,
+
             IsZoomEnabled = false,
             IsPanEnabled = false,
             MajorGridlineStyle = LineStyle.Dot,

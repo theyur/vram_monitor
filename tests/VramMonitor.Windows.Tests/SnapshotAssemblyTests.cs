@@ -104,8 +104,9 @@ public sealed class SnapshotAssemblyTests
         // Still Ok: an exited process is not a disruption, and a missing shared array does not degrade
         // the sample either.
         Assert.Equal(ProbeOutcome.Ok, s.Outcome);
-        Assert.Single(s.Measurements);                       // the exited process contributes nothing at all
-        Assert.Equal(10u, s.Measurements[0].Pid);
+        // the exited process contributes nothing at all
+        RawProcessMeasurement only = Assert.Single(s.Measurements);
+        Assert.Equal(10u, only.Pid);
     }
 
     [Fact]

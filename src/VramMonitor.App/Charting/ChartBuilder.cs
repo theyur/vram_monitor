@@ -50,11 +50,19 @@ public static class ChartBuilder
             TextColor = OxyColor.FromRgb(0x33, 0x3A, 0x45),
         };
 
+        // Under the plot rather than beside it: a column of legend entries down the right cost the graph
+        // roughly a fifth of the window's width, and the graph is the thing being read. Horizontal, so the
+        // entries flow across and wrap instead of stacking into a tall column again.
         model.Legends.Add(new Legend
         {
-            LegendPosition = LegendPosition.RightTop,
+            LegendPosition = LegendPosition.BottomLeft,
             LegendPlacement = LegendPlacement.Outside,
+            LegendOrientation = LegendOrientation.Horizontal,
             LegendFontSize = 11,
+
+            // Three lines' worth, which holds the ten charted applications plus the total at the default
+            // window width. Without the cap a raised chart-top-N would take the height out of the graph.
+            LegendMaxHeight = 90,
         });
 
         AddAxes(model, snapshot);

@@ -64,10 +64,18 @@ the flag to maximize first and capture the whole screen, which is better when yo
 and the full consumer list in one frame. Either way the image is downscaled to 1920 wide, because
 reading a raw 4K grab costs a lot of context for no extra detail.
 
-The script calls `SetProcessDPIAware()` before measuring. This is the non-obvious part: without
-it, `GetWindowRect` returns logically-scaled coordinates on a high-DPI display while
-`CopyFromScreen` works in physical pixels, so the capture silently lands up and to the left of
-the real window and you get a picture of whatever was behind it.
+The script sets per-monitor DPI awareness before measuring, and does it **on the thread**
+(`SetThreadDpiAwarenessContext`) rather than the process. This is the non-obvious part, and it has
+two halves. Without any DPI awareness, `GetWindowRect` returns logically-scaled coordinates while
+`CopyFromScreen` works in physical pixels, so the capture lands up and to the left of the window
+and shows whatever was behind it. And `SetProcessDPIAware()` is not enough, because `pwsh.exe`
+already declares `SYSTEM_AWARE` in its manifest, which makes the process-wide call a silent no-op:
+a system-aware process is told a single DPI for the whole desktop — the primary monitor's — and
+Windows then virtualizes every other monitor's geometry by `systemDPI / monitorDPI`. On a desktop
+with a 4K primary at 150% next to a 1920x1080 display at 100%, the second monitor is reported as
+2880x1620 and the full-screen capture region comes out half again too large.
+
+Both failures are silent, which is why the script asserts the mode rather than hoping for it.
 
 **Read the screenshot rather than assuming a successful launch.** The status bar along the bottom
 is the health summary and the fastest way to tell real success from a window that merely opened:

@@ -51,18 +51,20 @@ public static class ChartBuilder
         };
 
         // Under the plot rather than beside it: a column of legend entries down the right cost the graph
-        // roughly a fifth of the window's width, and the graph is the thing being read. Horizontal, so the
-        // entries flow across and wrap instead of stacking into a tall column again.
+        // roughly a third of the window's width at a raised chart-top-N, because OxyPlot wraps a vertical
+        // legend into further columns rather than clipping it, and the graph is the thing being read.
+        // Horizontal, so the entries flow across and wrap instead of stacking into a tall column again.
+        //
+        // Deliberately unbounded. A LegendMaxHeight would protect the graph's height, but past the bound
+        // OxyPlot drops the overflowing entries and cuts the last visible line mid-glyph, leaving series
+        // plotted that nothing identifies. Letting the legend take the height it needs costs about a fifth
+        // of the plot at chart-top-N 50 and nothing at all at the default of 10.
         model.Legends.Add(new Legend
         {
             LegendPosition = LegendPosition.BottomLeft,
             LegendPlacement = LegendPlacement.Outside,
             LegendOrientation = LegendOrientation.Horizontal,
             LegendFontSize = 11,
-
-            // Three lines' worth, which holds the ten charted applications plus the total at the default
-            // window width. Without the cap a raised chart-top-N would take the height out of the graph.
-            LegendMaxHeight = 90,
         });
 
         AddAxes(model, snapshot);

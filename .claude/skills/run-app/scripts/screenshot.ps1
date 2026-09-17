@@ -47,7 +47,11 @@ if ($WindowOnly) {
     $x = $r.Left; $y = $r.Top
     $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
 } else {
-    $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+    # The screen the window is actually on, not the primary one. SW_MAXIMIZE above leaves the window
+    # on whichever monitor it already occupied, so capturing PrimaryScreen would hand back a picture
+    # of a different display -- silently, which is the worst failure available to a check whose whole
+    # purpose is to be looked at.
+    $b = [System.Windows.Forms.Screen]::FromHandle($handle).Bounds
     $x = $b.X; $y = $b.Y; $w = $b.Width; $h = $b.Height
 }
 

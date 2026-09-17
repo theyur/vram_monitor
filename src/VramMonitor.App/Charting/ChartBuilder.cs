@@ -50,10 +50,20 @@ public static class ChartBuilder
             TextColor = OxyColor.FromRgb(0x33, 0x3A, 0x45),
         };
 
+        // Under the plot rather than beside it: a column of legend entries down the right cost the graph
+        // roughly a third of the window's width at a raised chart-top-N, because OxyPlot wraps a vertical
+        // legend into further columns rather than clipping it, and the graph is the thing being read.
+        // Horizontal, so the entries flow across and wrap instead of stacking into a tall column again.
+        //
+        // Deliberately unbounded. A LegendMaxHeight would protect the graph's height, but past the bound
+        // OxyPlot drops the overflowing entries and cuts the last visible line mid-glyph, leaving series
+        // plotted that nothing identifies. Letting the legend take the height it needs costs about a fifth
+        // of the plot at chart-top-N 50 and nothing at all at the default of 10.
         model.Legends.Add(new Legend
         {
-            LegendPosition = LegendPosition.RightTop,
+            LegendPosition = LegendPosition.BottomLeft,
             LegendPlacement = LegendPlacement.Outside,
+            LegendOrientation = LegendOrientation.Horizontal,
             LegendFontSize = 11,
         });
 
@@ -82,13 +92,19 @@ public static class ChartBuilder
 
             foreach (SessionView session in app.Sessions)
             {
+                // Out of the legend on purpose. A browser can hold dozens of GPU-touching processes, so
+                // legending them would let expanding one application grow the legend without bound and eat
+                // the plot it sits under. These lines are subordinate anyway -- dotted, thin, and drawn in a
+                // faded shade of an application that the legend already names -- and they are identified
+                // where the user expanded them: the row in the consumer list, and the hover tracker.
                 model.Series.Add(CreateSeries(
                     $"{app.DisplayName} · pid {session.Pid}",
                     session.Series,
                     OxyColor.FromAColor(150, baseColour),
                     1.0,
                     ApplicationAxisKey,
-                    LineStyle.Dot));
+                    LineStyle.Dot,
+                    inLegend: false));
             }
         }
 
@@ -158,7 +174,8 @@ public static class ChartBuilder
         OxyColor colour,
         double thickness,
         string axisKey,
-        LineStyle style = LineStyle.Solid)
+        LineStyle style = LineStyle.Solid,
+        bool inLegend = true)
     {
         var series = new LineSeries
         {
@@ -167,6 +184,10 @@ public static class ChartBuilder
             StrokeThickness = thickness,
             LineStyle = style,
             YAxisKey = axisKey,
+
+            // The title is still set when the series stays out of the legend: it is what the hover tracker
+            // names the line by.
+            RenderInLegend = inLegend,
             TrackerFormatString = "{0}\n{2:HH:mm:ss}\n{4:0} MB",
             CanTrackerInterpolatePoints = false,
         };

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;

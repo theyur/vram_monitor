@@ -32,9 +32,9 @@ internal sealed class Hist
             new GpuId("luid_0x0_0x1"),
             new ProcessIdentity(
                 path.ToLowerInvariant(),
-                System.IO.Path.GetFileNameWithoutExtension(path),
+                Path.GetFileNameWithoutExtension(path),
                 path,
-                System.IO.Path.GetFileName(path),
+                Path.GetFileName(path),
                 ProcessIdentityKind.ExecutablePath),
             Build.T0,
             Build.T0,

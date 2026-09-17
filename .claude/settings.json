@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(roslynator analyze *)",
+      "PowerShell(roslynator list-symbols *)",
+      "PowerShell(roslynator loc *)",
+      "PowerShell(roslynator lloc *)",
+      "PowerShell(jb inspectcode *)",
+      "Bash(roslynator analyze *)",
+      "Bash(roslynator list-symbols *)",
+      "Bash(roslynator loc *)",
+      "Bash(roslynator lloc *)",
+      "Bash(jb inspectcode *)"
+    ]
+  }
+}

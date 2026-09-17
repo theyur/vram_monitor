@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
 using VramMonitor.Core.Abstractions;
 
 namespace VramMonitor.Windows.Processes;
@@ -37,11 +36,13 @@ public sealed partial class WindowsProcessMetadataResolver : IProcessMetadataRes
 
     // Hand-written rather than source-generated: the generator refuses to marshal a char[] buffer without
     // disabling runtime marshalling assembly-wide, which is not worth doing for one call.
+#pragma warning disable SYSLIB1054 // deliberate: see the comment above
     [DllImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", SetLastError = true,
         CharSet = CharSet.Unicode)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool QueryFullProcessImageName(
         nint process, uint flags, char[] buffer, ref uint size);
+#pragma warning restore SYSLIB1054
 
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -63,7 +64,7 @@ public sealed partial class WindowsProcessMetadataResolver : IProcessMetadataRes
         }
         finally
         {
-            CloseHandle(handle);
+            _ = CloseHandle(handle);
         }
     }
 
@@ -80,7 +81,7 @@ public sealed partial class WindowsProcessMetadataResolver : IProcessMetadataRes
         }
         finally
         {
-            CloseHandle(handle);
+            _ = CloseHandle(handle);
         }
     }
 

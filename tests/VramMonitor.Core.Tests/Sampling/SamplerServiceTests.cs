@@ -18,7 +18,7 @@ public sealed class SamplerServiceTests
         MonitoringFloorBytes = Mb(100),
     }.Validated();
 
-    private static (SamplerService Sampler, FakeGpuMemoryProvider Provider, FakeClock Clock, FakeMetadataResolver Meta)
+    private static (SamplerService Sampler, FakeGpuMemoryProvider Provider, FakeClock Clock)
         NewSampler(Action<FakeGpuMemoryProvider>? script = null)
     {
         var provider = new FakeGpuMemoryProvider();
@@ -29,7 +29,7 @@ public sealed class SamplerServiceTests
         var sampler = new SamplerService(provider, meta, Settings(), clock);
         sampler.SetGpu(provider.Gpu);
 
-        return (sampler, provider, clock, meta);
+        return (sampler, provider, clock);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public sealed class SamplerServiceTests
     {
         // An escaping exception would kill the background task silently, leaving the tray showing stale
         // values with no marker and no rising error count.
-        (SamplerService sampler, FakeGpuMemoryProvider provider, FakeClock clock, _) =
+        (SamplerService sampler, FakeGpuMemoryProvider provider, FakeClock clock) =
             NewSampler(p => p.ThenMeasuring((1, 500)).ThenThrowing("counter blew up").ThenMeasuring((1, 500)));
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
@@ -59,7 +59,7 @@ public sealed class SamplerServiceTests
     [Fact]
     public async Task A_failed_probe_preserves_the_history_gathered_before_it()
     {
-        (SamplerService sampler, _, FakeClock clock, _) =
+        (SamplerService sampler, _, FakeClock clock) =
             NewSampler(p => p.ThenMeasuring((1, 500)).ThenFailing("probe lost"));
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
@@ -74,7 +74,7 @@ public sealed class SamplerServiceTests
     [Fact]
     public async Task Late_and_skipped_cycles_are_counted_separately()
     {
-        (SamplerService sampler, _, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, _, FakeClock clock) = NewSampler();
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
         clock.Advance(Interval);                                  // on time
@@ -97,7 +97,7 @@ public sealed class SamplerServiceTests
         // Several cycles run AFTER the step on purpose. An earlier version of this test pumped only one,
         // and passed: the damage was done to the anchor, so the first cycle still worked and every later
         // one failed. One cycle is not enough to prove monotonicity survives.
-        (SamplerService sampler, _, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, _, FakeClock clock) = NewSampler();
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
         clock.Advance(Interval);
@@ -128,7 +128,7 @@ public sealed class SamplerServiceTests
     {
         // Spacing must stay one interval apart: the monitor keeps its own timeline rather than following
         // the correction, so aggressive-duration weighting is unaffected.
-        (SamplerService sampler, _, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, _, FakeClock clock) = NewSampler();
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
         clock.StepWallClock(TimeSpan.FromMinutes(-90));
@@ -152,7 +152,7 @@ public sealed class SamplerServiceTests
     public async Task A_forward_wall_clock_correction_is_followed()
     {
         // Forward is the case where following the clock is right: our timeline is behind reality.
-        (SamplerService sampler, _, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, _, FakeClock clock) = NewSampler();
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
         DateTimeOffset first = sampler.Current.Samples[0].TimestampUtc;
@@ -169,7 +169,7 @@ public sealed class SamplerServiceTests
     [Fact]
     public async Task A_settings_change_re_evaluates_retained_history_without_probing_again()
     {
-        (SamplerService sampler, FakeGpuMemoryProvider provider, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, FakeGpuMemoryProvider provider, FakeClock clock) = NewSampler();
         provider.Fallback = (gpu, at) => new GpuSnapshot(
             gpu, at, ProbeOutcome.Ok, Mb(8000), [new RawProcessMeasurement(1, Mb(500), null)]);
 
@@ -194,7 +194,7 @@ public sealed class SamplerServiceTests
     [Fact]
     public async Task Shrinking_the_history_window_evicts_immediately()
     {
-        (SamplerService sampler, _, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, _, FakeClock clock) = NewSampler();
 
         for (int i = 0; i < 40; i++)
         {
@@ -214,7 +214,7 @@ public sealed class SamplerServiceTests
     {
         // Export reads this from another thread while sampling continues; handing out the store's live
         // collections would leave it reading torn state mid-trim.
-        (SamplerService sampler, _, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, _, FakeClock clock) = NewSampler();
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
         MonitorSnapshot captured = sampler.Current;
@@ -233,7 +233,7 @@ public sealed class SamplerServiceTests
     [Fact]
     public async Task Selecting_a_different_gpu_clears_history_but_a_new_luid_for_the_same_gpu_does_not()
     {
-        (SamplerService sampler, FakeGpuMemoryProvider provider, FakeClock clock, _) = NewSampler();
+        (SamplerService sampler, FakeGpuMemoryProvider provider, FakeClock clock) = NewSampler();
 
         for (int i = 0; i < 3; i++)
         {
@@ -266,7 +266,7 @@ public sealed class SamplerServiceTests
     [Fact]
     public async Task Probe_duration_is_tracked_for_the_health_display()
     {
-        (SamplerService sampler, _, _, _) = NewSampler();
+        (SamplerService sampler, _, _) = NewSampler();
 
         await sampler.PumpOnceAsync(TestContext.Current.CancellationToken);
 

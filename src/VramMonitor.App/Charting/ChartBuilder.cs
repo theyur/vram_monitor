@@ -92,13 +92,19 @@ public static class ChartBuilder
 
             foreach (SessionView session in app.Sessions)
             {
+                // Out of the legend on purpose. A browser can hold dozens of GPU-touching processes, so
+                // legending them would let expanding one application grow the legend without bound and eat
+                // the plot it sits under. These lines are subordinate anyway -- dotted, thin, and drawn in a
+                // faded shade of an application that the legend already names -- and they are identified
+                // where the user expanded them: the row in the consumer list, and the hover tracker.
                 model.Series.Add(CreateSeries(
                     $"{app.DisplayName} · pid {session.Pid}",
                     session.Series,
                     OxyColor.FromAColor(150, baseColour),
                     1.0,
                     ApplicationAxisKey,
-                    LineStyle.Dot));
+                    LineStyle.Dot,
+                    inLegend: false));
             }
         }
 
@@ -168,7 +174,8 @@ public static class ChartBuilder
         OxyColor colour,
         double thickness,
         string axisKey,
-        LineStyle style = LineStyle.Solid)
+        LineStyle style = LineStyle.Solid,
+        bool inLegend = true)
     {
         var series = new LineSeries
         {
@@ -177,6 +184,10 @@ public static class ChartBuilder
             StrokeThickness = thickness,
             LineStyle = style,
             YAxisKey = axisKey,
+
+            // The title is still set when the series stays out of the legend: it is what the hover tracker
+            // names the line by.
+            RenderInLegend = inLegend,
             TrackerFormatString = "{0}\n{2:HH:mm:ss}\n{4:0} MB",
             CanTrackerInterpolatePoints = false,
         };

@@ -134,9 +134,14 @@ runner configured in `global.json` does not discover through it. Run the test pr
 executables instead; they self-host and are the reliable signal:
 
 ```bash
+./tests/VramMonitor.App.Tests/bin/Debug/net10.0-windows/VramMonitor.App.Tests.exe
 ./tests/VramMonitor.Core.Tests/bin/Debug/net10.0/VramMonitor.Core.Tests.exe
 ./tests/VramMonitor.Windows.Tests/bin/Debug/net10.0-windows/VramMonitor.Windows.Tests.exe
 ```
 
-96 + 36 = 132 tests as of 2026-09-17. GPU-dependent integration tests skip rather than fail on a
-machine without an adapter.
+14 + 96 + 36 = 146 tests as of 2026-09-17. GPU-dependent integration tests skip rather than fail
+on a machine without an adapter.
+
+`VramMonitor.App.Tests` is the only project that can see the WPF layer, so chart and view-model
+behaviour is tested there; note it needs `<UseWPF>true</UseWPF>` because referencing the app
+pulls in OxyPlot.Wpf.

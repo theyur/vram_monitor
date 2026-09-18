@@ -1,3 +1,4 @@
 {
+  "includeAuthors": ["theyur"],
   "disabledLabels": ["skip-greptile"]
 }

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore VramMonitor.slnx
+
+      - name: Build
+        run: dotnet build VramMonitor.slnx --configuration Release --no-restore
+
+      - name: Test application
+        run: .\tests\VramMonitor.App.Tests\bin\Release\net10.0-windows\VramMonitor.App.Tests.exe
+
+      - name: Test core
+        run: .\tests\VramMonitor.Core.Tests\bin\Release\net10.0\VramMonitor.Core.Tests.exe
+
+      - name: Test Windows integration
+        run: .\tests\VramMonitor.Windows.Tests\bin\Release\net10.0-windows\VramMonitor.Windows.Tests.exe

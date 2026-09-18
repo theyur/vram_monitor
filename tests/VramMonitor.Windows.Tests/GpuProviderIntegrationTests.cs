@@ -148,13 +148,21 @@ public sealed class ProcessMetadataIntegrationTests
     }
 
     [Fact]
-    public void A_protected_process_denies_its_path_without_throwing()
+    public void The_system_process_metadata_degrades_without_throwing()
     {
-        // PID 4 is the System process; a normal user cannot open it. The resolver must degrade, not fail.
+        // PID 4 is the System process. Access to each kind of metadata depends on the caller's privileges:
+        // a denied time query returns zero, while a permitted query returns the real process creation time.
         var resolver = new WindowsProcessMetadataResolver();
 
         Assert.Null(resolver.ResolvePath(4));
-        Assert.Equal(0, resolver.GetTimes(4)!.Value.CreationTicks);
+
+        Core.Abstractions.ProcessTimes? times = resolver.GetTimes(4);
+        Assert.NotNull(times);
+        if (times.Value.CreationTicks != 0)
+        {
+            DateTime creationUtc = DateTime.FromFileTimeUtc(times.Value.CreationTicks);
+            Assert.InRange(creationUtc, DateTime.UnixEpoch, DateTime.UtcNow);
+        }
 
         resolver.BeginProbe();
         Assert.Equal("System.exe", resolver.ResolveNameOnly(4));

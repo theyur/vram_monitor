@@ -7,6 +7,10 @@ and keeps a rolling in-memory history, so you can answer one question:
 
 Built to `docs/vram-monitor-design-spec.md`.
 
+This application was created as an experiment in end-to-end software development using AI tools only.
+Human input defined the goal and supplied feedback; AI tools handled design, planning, implementation,
+testing, review, and documentation.
+
 ---
 
 ## Running it
@@ -79,10 +83,9 @@ at the default interval — handle count and working set both stayed flat.
 
 ### Two things worth knowing about the numbers
 
-- **Per-application values can sum to more than the total.** Windows attributes a shared surface to every
-  process that references it, so the sum over applications legitimately exceeds the adapter total (measured:
-  9502 MB against 7601 MB on an idle desktop). The total line is read from the adapter counter and is never
-  derived by summing. Reconciling the difference would mean inventing data.
+- **Application and total lines use different accounting.** Shared allocations may be attributed more than
+  once in per-process counters, so an application can sometimes plot above **Total VRAM**. See
+  [Why an application can plot above Total VRAM](#why-an-application-can-plot-above-total-vram).
 - **A missing measurement is never shown as zero.** An unreadable value renders as `—` and breaks the line
   on the chart. A process that simply exits also breaks its line, but gets no disruption marker — the marker
   is what distinguishes a probe failure from a normal exit.
@@ -100,6 +103,25 @@ Any retained consumer can be selected, which highlights its line and dims the re
 reveals its individual processes and overlays their lines. Clicking the selected row again, pressing
 <kbd>Esc</kbd>, or the **Show all lines** button that appears while something is selected brings every line
 back.
+
+### Why an application can plot above Total VRAM
+
+The application lines and the **Total VRAM** line are two different accounting views:
+
+- An application line adds the dedicated VRAM attributed to the processes grouped under that application.
+- **Total VRAM** comes directly from the GPU adapter counter and represents overall physical usage. It is
+  never calculated by adding the application lines.
+
+Windows may attribute the same shared GPU surface or allocation to every process that references it. When
+those process values are grouped into an application, the allocation can therefore be counted more than
+once. A multi-process application can consequently plot above **Total VRAM**, and adding several application
+lines can exceed it by even more. For example, an observed desktop reported 9502 MB across applications
+while the adapter counter reported 7601 MB.
+
+Read **Total VRAM** as the measure of physical memory pressure. Read the application and process lines as
+attribution clues showing which software participates in that usage. Do not add or subtract those lines to
+reconstruct free memory. The monitor deliberately keeps the raw counter values instead of normalizing them
+with an invented estimate.
 
 Chart markers:
 

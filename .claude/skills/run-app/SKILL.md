@@ -34,8 +34,8 @@ you are done inspecting that dialog. Command-line overrides are deliberately nev
 
 **Nothing is visible until sampling has run for a while.** "Aggressive consumers" stays at 0
 until processes exceed the aggressive-duration threshold, so a screenshot taken two seconds
-after launch shows an empty list and tells you nothing. Pass `--interval-seconds 2` (2 s is the
-documented minimum) and give it 30–60 s before judging the chart.
+after launch shows an empty list and tells you nothing. Pass `--interval-seconds 2` (1 s is the
+documented minimum, and also works) and give it 30–60 s before judging the chart.
 
 ## Build and launch
 

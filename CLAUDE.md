@@ -47,7 +47,7 @@ warm run, no phantom resolve errors. A second run is not needed here.
 
 ```bash
 roslynator analyze VramMonitor.slnx                                    # analyzer findings
-roslynator loc VramMonitor.slnx                                        # 5,105 LOC / 7,549 total
+roslynator loc VramMonitor.slnx                                        # 5,893 LOC / 8,751 total
 roslynator list-symbols VramMonitor.slnx --visibility public --depth member
 jb inspectcode VramMonitor.slnx --stdout -f=Text -e=WARNING --caches-home=r:/Temp/jb-caches --no-updates
 ```
@@ -139,7 +139,7 @@ executables instead; they self-host and are the reliable signal:
 ./tests/VramMonitor.Windows.Tests/bin/Debug/net10.0-windows/VramMonitor.Windows.Tests.exe
 ```
 
-14 + 96 + 36 = 146 tests as of 2026-09-17. GPU-dependent integration tests skip rather than fail
+49 + 111 + 36 = 196 tests as of 2026-10-10. GPU-dependent integration tests skip rather than fail
 on a machine without an adapter.
 
 `VramMonitor.App.Tests` is the only project that can see the WPF layer, so chart and view-model

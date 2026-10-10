@@ -157,6 +157,24 @@ public partial class MainWindow : Window
         return null;
     }
 
+    /// <summary>
+    /// Caps the list column so the chart column never drops below its MinWidth.
+    /// </summary>
+    /// <remarks>
+    /// GridSplitter resizing a pixel column beside a star column honours only the pixel column's own
+    /// limits; without this cap the list could be dragged over the chart and push it off-screen. The same
+    /// cap also stops a widened list overflowing the window when the window is later made narrower.
+    /// Measured on the outer panel, not the split grid: once the grid's columns ask for more than it is
+    /// given, WPF arranges it at the larger size and clips, so the grid's own size never shrinks.
+    /// </remarks>
+    private void OnLayoutRootSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        ArgumentNullException.ThrowIfNull(e);
+
+        var available = e.NewSize.Width - SplitterColumn.ActualWidth - ChartColumn.MinWidth;
+        ListColumn.MaxWidth = Math.Max(ListColumn.MinWidth, available);
+    }
+
     private void OnToggleExpand(object sender, RoutedEventArgs e)
     {
         if (sender is ToggleButton { Tag: string key }) _model.ToggleExpanded(key);

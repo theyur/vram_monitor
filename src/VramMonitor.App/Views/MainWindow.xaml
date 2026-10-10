@@ -114,7 +114,7 @@
         </Style>
     </Window.Resources>
 
-    <DockPanel>
+    <DockPanel SizeChanged="OnLayoutRootSizeChanged">
         <!-- Blocking startup problems are surfaced once, here, rather than as a dialog (spec 16.3). -->
         <Border DockPanel.Dock="Top" Background="#FFFFF4E5" Padding="12,8" BorderBrush="#FFE8C98A"
                 BorderThickness="0,0,0,1"
@@ -151,11 +151,15 @@
             <TextBlock Text="{Binding StatusLine}" FontSize="11" Foreground="#FF5A6274" />
         </Border>
 
+        <!-- The list keeps a fixed width so the chart absorbs window resizes. GridSplitter only checks the
+             limits of the pixel column it resizes, never the star column's MinWidth, so the list's
+             MaxWidth is kept in step with the window in OnLayoutRootSizeChanged. 480 is the narrowest list
+             that still leaves the application name room beside the four fixed value columns. -->
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="480" MinWidth="360" />
-                <ColumnDefinition Width="4" />
-                <ColumnDefinition Width="*" MinWidth="360" />
+                <ColumnDefinition x:Name="ListColumn" Width="480" MinWidth="480" />
+                <ColumnDefinition x:Name="SplitterColumn" Width="4" />
+                <ColumnDefinition x:Name="ChartColumn" Width="*" MinWidth="360" />
             </Grid.ColumnDefinitions>
 
             <DockPanel Background="White">

@@ -492,8 +492,9 @@ public static class Analyzer
 
     /// <remarks>
     /// Binary search, not a scan. These run once per application per evaluated instant inside the demotion
-    /// grace window, so at the extremes the settings permit -- a 2 second interval, a 12 hour window and an
-    /// hour of grace -- a linear scan would be hundreds of millions of comparisons per pass. Samples are
+    /// grace window, so at the extremes the settings permit -- a 1 second interval, a 12 hour window and an
+    /// hour of grace, some 47,000 retained samples against 3,600 evaluated instants -- a linear scan would be
+    /// over a hundred million comparisons per application per pass, billions across them. Samples are
     /// ordered by construction (the store rejects an out-of-order append), so the search is sound.
     /// </remarks>
     internal static int FirstIndexAtOrAfter(IReadOnlyList<GpuSample> samples, DateTimeOffset at)

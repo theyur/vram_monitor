@@ -41,7 +41,7 @@ These apply to the current launch only and are never written back to the setting
 
 | Argument | Meaning |
 |---|---|
-| `--interval-seconds <n>` | Sampling interval (minimum 2) |
+| `--interval-seconds <n>` | Sampling interval (minimum 1) |
 | `--history-minutes <n>` | Rolling history window (maximum 720) |
 | `--floor-mb <n>` | Monitoring floor for aggressive analysis |
 | `--aggressive-minutes <n>` | Cumulative qualifying time before an application counts as aggressive |
@@ -103,6 +103,13 @@ Any retained consumer can be selected, which highlights its line and dims the re
 reveals its individual processes and overlays their lines. Clicking the selected row again, pressing
 <kbd>Esc</kbd>, or the **Show all lines** button that appears while something is selected brings every line
 back.
+
+The chart's time axis is logarithmic in age: the newest samples are on the right and get the most room, and
+older ones are progressively condensed toward the left, so a spike from the last minute is easy to inspect
+while the whole history window stays in view. With the default 60-minute window the newest minute takes
+about a sixth of the width and the newest five minutes nearly half. The axis always spans the full window,
+even before it has filled. Ticks sit at fixed ages (now, 1, 5, 10 and 30 minutes ago for a 60-minute window)
+labelled with clock times; hovering a line shows the exact sample's date, time, UTC offset and value.
 
 ### Why an application can plot above Total VRAM
 

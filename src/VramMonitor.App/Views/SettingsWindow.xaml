@@ -39,7 +39,7 @@
 
                 <TextBlock Text="Sample interval (seconds)" Style="{StaticResource Label}" />
                 <TextBox x:Name="IntervalBox" />
-                <TextBlock Style="{StaticResource Hint}" Text="How often the GPU is probed. Minimum 2 seconds." />
+                <TextBlock Style="{StaticResource Hint}" Text="How often the GPU is probed. Minimum 1 second." />
 
                 <TextBlock Text="History window (minutes)" Style="{StaticResource Label}" />
                 <TextBox x:Name="WindowBox" />

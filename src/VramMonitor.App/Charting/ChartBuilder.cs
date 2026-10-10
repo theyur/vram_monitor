@@ -2,7 +2,6 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Legends;
-using OxyPlot.Series;
 using VramMonitor.App.Formatting;
 using VramMonitor.Core.Analysis;
 using VramMonitor.Core.Model;
@@ -22,9 +21,17 @@ namespace VramMonitor.App.Charting;
 /// A normal process exit and a probe failure both break the line; what tells them apart is the disruption
 /// marker on the time axis, which only a failure or a partial sample gets (spec sections 13.2 and 13.5).
 /// </para>
+/// <para>
+/// Time runs on a logarithmic-age axis. One <see cref="LogTimeScale"/> is built per call from the snapshot
+/// alone and every series, every marker and the axis itself are positioned through it, so a point, its
+/// process line, the total and a marker sharing a timestamp share an X exactly. The scale throws for a
+/// non-positive window: the snapshot's settings are expected to have been through
+/// <c>MonitorSettings.Validated()</c>, which every path into a snapshot does.
+/// </para>
 /// </remarks>
 public static class ChartBuilder
 {
+    public const string TimeAxisKey = "time";
     public const string ApplicationAxisKey = "apps";
     public const string TotalAxisKey = "total";
 
@@ -37,11 +44,24 @@ public static class ChartBuilder
         OxyColor.FromRgb(0x94, 0xA3, 0xB8), OxyColor.FromRgb(0x84, 0xCC, 0x16),
     ];
 
+    /// <param name="snapshot">The state to draw. Its settings must already be validated.</param>
+    /// <param name="selectedKey">The application to highlight, dimming every other line; null for none.</param>
+    /// <param name="expandedKeys">Applications whose individual process lines are overlaid.</param>
+    /// <param name="timeZone">
+    /// Where clock times are displayed. Null means the machine's local zone; tests pass a fixed one.
+    /// </param>
     public static PlotModel Build(
         MonitorSnapshot snapshot,
         string? selectedKey,
-        IReadOnlyCollection<string> expandedKeys)
+        IReadOnlyCollection<string> expandedKeys,
+        TimeZoneInfo? timeZone = null)
     {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(expandedKeys);
+
+        var context = new Context(
+            new LogTimeScale(snapshot.TakenUtc, snapshot.Settings.HistoryWindow), timeZone ?? TimeZoneInfo.Local);
+
         var model = new PlotModel
         {
             PlotAreaBorderColor = OxyColor.FromRgb(0xD8, 0xDE, 0xE6),
@@ -65,7 +85,7 @@ public static class ChartBuilder
             LegendFontSize = 11,
         });
 
-        AddAxes(model, snapshot);
+        AddAxes(model, snapshot, context);
 
         AnalysisResult analysis = snapshot.Analysis;
         var charted = new HashSet<string>(analysis.ChartedKeys);
@@ -79,6 +99,7 @@ public static class ChartBuilder
             OxyColor baseColour = Palette[colour++ % Palette.Length];
 
             model.Series.Add(CreateSeries(
+                context,
                 app.DisplayName,
                 app.Series,
                 dimmed ? OxyColor.FromAColor(55, baseColour) : baseColour,
@@ -96,6 +117,7 @@ public static class ChartBuilder
                 // faded shade of an application that the legend already names -- and they are identified
                 // where the user expanded them: the row in the consumer list, and the hover tracker.
                 model.Series.Add(CreateSeries(
+                    context,
                     $"{app.DisplayName} · pid {session.Pid}",
                     session.Series,
                     OxyColor.FromAColor(150, baseColour),
@@ -106,63 +128,20 @@ public static class ChartBuilder
             }
         }
 
-        AddTotalSeries(model, analysis.Total);
-        AddDisruptionMarkers(model, analysis.Markers);
+        AddTotalSeries(model, context, analysis.Total);
+        AddDisruptionMarkers(model, context, analysis.Markers);
 
         return model;
     }
 
-    private static void AddAxes(PlotModel model, MonitorSnapshot snapshot)
+    /// <summary>What every element of one plot is positioned and labelled by.</summary>
+    private sealed record Context(LogTimeScale Scale, TimeZoneInfo TimeZone);
+
+    private static void AddAxes(PlotModel model, MonitorSnapshot snapshot, Context context)
     {
-        DateTimeOffset end = snapshot.TakenUtc.ToLocalTime();
-        TimeSpan window = snapshot.Settings.HistoryWindow;
-        DateTimeOffset start = end - window;
-
-        // The tick step is pinned rather than left to OxyPlot, because OxyPlot derives it from the plot
-        // area's pixel width -- Axis.UpdateIntervals calls DateTimeAxis.CalculateActualInterval, which
-        // budgets IntervalLength (60px) per label -- and that width is not constant even when the window
-        // is. The left value axis has an automatic Maximum, so its widest label grows from "500" to "12288"
-        // as data arrives and takes about nine more pixels from the plot, and the outside legend re-flows as
-        // the charted series set changes. For a ten-minute window OxyPlot's own boundary sits at exactly
-        // 660px of plot area, so a few pixels of drift flipped the labels between a two-minute and a
-        // one-minute step on successive refreshes at an unchanged window size. A step chosen from the
-        // history window alone cannot do that.
-        //
-        // What this gives up is OxyPlot's automatic overlap protection, which is why TimeAxisStep targets at
-        // most six labels and why the format below drops the seconds as soon as they are constant.
-        TimeSpan step = TimeAxisStep.For(window);
-
-        // Seconds earn their width only while the step is finer than a minute. At coarser steps every label
-        // would end in the same ":00" -- about 15px per label spent on nothing, and enough to make the
-        // labels of a six-to-ten-minute window collide at the chart column's MinWidth.
-        string timeFormat = step < TimeSpan.FromMinutes(1) ? "HH:mm:ss" : "HH:mm";
-
-        // Zoom and pan are deliberately off: spec section 12.3 puts them out of scope for v1.
-        model.Axes.Add(new DateTimeAxis
-        {
-            Position = AxisPosition.Bottom,
-            StringFormat = timeFormat,
-            Minimum = DateTimeAxis.ToDouble(start.DateTime),
-            Maximum = DateTimeAxis.ToDouble(end.DateTime),
-
-            // A DateTimeAxis carries its values as days since an epoch, so a step is a number of DAYS.
-            // Setting it makes Axis.UpdateIntervals skip CalculateActualInterval entirely, which is the
-            // whole point. IntervalType is therefore never consulted -- DateTimeAxis only reads it inside
-            // the method that no longer runs -- so setting it would be inert; StringFormat above is still
-            // honoured, because ActualStringFormat is assigned independently of the step.
-            MajorStep = step.TotalDays,
-
-            // Matching the major step is what the automatic path already did for every interval type this
-            // window range can reach, and minor ticks coinciding with major ones are dropped, so the axis
-            // line stays free of intermediate marks. Leave this unset and OxyPlot falls back to a fifth of
-            // the major step, putting twenty tick marks on an axis that has none today.
-            MinorStep = step.TotalDays,
-
-            IsZoomEnabled = false,
-            IsPanEnabled = false,
-            MajorGridlineStyle = LineStyle.Dot,
-            MajorGridlineColor = OxyColor.FromRgb(0xEC, 0xEF, 0xF3),
-        });
+        // The time axis takes its tick positions from the history window alone; LogTimeTicks explains why
+        // letting OxyPlot derive them from the plot's pixel width made the label density flicker.
+        model.Axes.Add(new LogTimeAxis(context.Scale, context.TimeZone) { Key = TimeAxisKey });
 
         model.Axes.Add(new LinearAxis
         {
@@ -196,7 +175,8 @@ public static class ChartBuilder
         });
     }
 
-    private static LineSeries CreateSeries(
+    private static TimestampedLineSeries CreateSeries(
+        Context context,
         string title,
         IReadOnlyList<SeriesPoint> points,
         OxyColor colour,
@@ -205,37 +185,40 @@ public static class ChartBuilder
         LineStyle style = LineStyle.Solid,
         bool inLegend = true)
     {
-        var series = new LineSeries
+        var series = new TimestampedLineSeries(context.TimeZone)
         {
             Title = title,
             Color = colour,
             StrokeThickness = thickness,
             LineStyle = style,
+            XAxisKey = TimeAxisKey,
             YAxisKey = axisKey,
 
             // The title is still set when the series stays out of the legend: it is what the hover tracker
             // names the line by.
             RenderInLegend = inLegend,
-            TrackerFormatString = "{0}\n{2:HH:mm:ss}\n{4:0} MB",
-            CanTrackerInterpolatePoints = false,
         };
 
+        series.EnsureCapacity(points.Count);
         foreach (SeriesPoint point in points)
         {
-            double x = DateTimeAxis.ToDouble(point.TimestampUtc.ToLocalTime().DateTime);
+            // A point after the snapshot's own time has no age to place it by. Analysis never produces one,
+            // but the logarithm must not be the thing that finds out. Anything older than the window is kept,
+            // at a negative X, for the plot area to clip -- including a gap break analysis put just outside it.
+            if (context.Scale.IsFuture(point.TimestampUtc)) continue;
 
-            // NaN is what produces a real discontinuity. Substituting zero here would invent a measurement.
-            series.Points.Add(new DataPoint(x, point.HasValue ? Format.Megabytes(point.Value) : double.NaN));
+            series.Add(context.Scale.ToX(point.TimestampUtc), point);
         }
 
         return series;
     }
 
-    private static void AddTotalSeries(PlotModel model, TotalSeries total)
+    private static void AddTotalSeries(PlotModel model, Context context, TotalSeries total)
     {
         if (total.Points.Count == 0) return;
 
-        LineSeries series = CreateSeries(
+        TimestampedLineSeries series = CreateSeries(
+            context,
             "Total GPU VRAM",
             total.Points,
             OxyColor.FromAColor(120, OxyColors.DimGray),
@@ -246,10 +229,13 @@ public static class ChartBuilder
         model.Series.Add(series);
     }
 
-    private static void AddDisruptionMarkers(PlotModel model, IReadOnlyList<DisruptionMarker> markers)
+    private static void AddDisruptionMarkers(
+        PlotModel model, Context context, IReadOnlyList<DisruptionMarker> markers)
     {
         foreach (DisruptionMarker marker in markers)
         {
+            if (context.Scale.IsFuture(marker.TimestampUtc)) continue;
+
             OxyColor colour = marker.Kind switch
             {
                 DisruptionKind.ProbeFailed => OxyColor.FromAColor(120, OxyColors.OrangeRed),
@@ -260,7 +246,9 @@ public static class ChartBuilder
             model.Annotations.Add(new LineAnnotation
             {
                 Type = LineAnnotationType.Vertical,
-                X = DateTimeAxis.ToDouble(marker.TimestampUtc.ToLocalTime().DateTime),
+                // Through the same scale as the series, so a marker sits exactly on the gap it explains.
+                X = context.Scale.ToX(marker.TimestampUtc),
+                XAxisKey = TimeAxisKey,
                 Color = colour,
                 LineStyle = LineStyle.Dot,
                 StrokeThickness = 1,

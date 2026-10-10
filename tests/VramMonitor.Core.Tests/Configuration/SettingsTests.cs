@@ -113,6 +113,68 @@ public sealed class SettingsTests : IDisposable
         Assert.Equal(MonitorSettings.MinAggressiveDuration, clamped.AggressiveDurationThreshold);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(500)]
+    [InlineData(-3000)]
+    public void An_interval_below_one_second_is_clamped_to_exactly_one_second(int milliseconds)
+    {
+        MonitorSettings clamped = new MonitorSettings { SampleInterval = TimeSpan.FromMilliseconds(milliseconds) }.Validated();
+
+        Assert.Equal(TimeSpan.FromSeconds(1), clamped.SampleInterval);
+    }
+
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1500)]
+    [InlineData(2000)]
+    [InlineData(10000)]
+    public void An_interval_at_or_above_the_floor_is_kept_as_is(int milliseconds)
+    {
+        TimeSpan interval = TimeSpan.FromMilliseconds(milliseconds);
+
+        Assert.Equal(interval, new MonitorSettings { SampleInterval = interval }.Validated().SampleInterval);
+    }
+
+    [Fact]
+    public void The_interval_ceiling_and_default_are_unchanged()
+    {
+        Assert.Equal(TimeSpan.FromMinutes(5), new MonitorSettings { SampleInterval = TimeSpan.FromMinutes(10) }.Validated().SampleInterval);
+        Assert.Equal(TimeSpan.FromSeconds(10), new MonitorSettings().Validated().SampleInterval);
+        Assert.Equal(TimeSpan.FromSeconds(1), MonitorSettings.MinSampleInterval);
+    }
+
+    [Fact]
+    public void A_one_second_interval_survives_a_save_and_load()
+    {
+        var store = new SettingsStore(FilePath);
+        store.Save(new MonitorSettings { SampleInterval = TimeSpan.FromSeconds(1) }.Validated());
+
+        Assert.Equal(TimeSpan.FromSeconds(1), store.Load().Settings.SampleInterval);
+    }
+
+    [Fact]
+    public void A_file_written_under_the_old_two_second_floor_loads_unchanged()
+    {
+        // No schema migration: a persisted interval at or above the new floor means what it always meant.
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(FilePath, """{ "schemaVersion": 1, "sampleIntervalSeconds": 2, "historyWindowMinutes": 60 }""");
+
+        SettingsLoadResult loaded = new SettingsStore(FilePath).Load();
+
+        Assert.False(loaded.UsedDefaults);
+        Assert.Equal(TimeSpan.FromSeconds(2), loaded.Settings.SampleInterval);
+    }
+
+    [Fact]
+    public void A_persisted_subsecond_interval_loads_as_the_floor()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(FilePath, """{ "schemaVersion": 1, "sampleIntervalSeconds": 0.2 }""");
+
+        Assert.Equal(TimeSpan.FromSeconds(1), new SettingsStore(FilePath).Load().Settings.SampleInterval);
+    }
+
     [Fact]
     public void Retention_horizon_is_the_window_plus_the_grace_period()
     {
@@ -146,6 +208,18 @@ public sealed class CommandLineTests
         Assert.Equal(TimeSpan.FromMinutes(30), applied.HistoryWindow);
         Assert.Equal(250 * MonitorSettings.BytesPerMegabyte, applied.MonitoringFloorBytes);
         Assert.Equal(3, applied.ChartTopApplications);
+    }
+
+    [Theory]
+    [InlineData("1", 1.0)]
+    [InlineData("1.5", 1.5)]
+    [InlineData("0.25", 1.0)]
+    [InlineData("0", 1.0)]
+    public void The_interval_override_goes_through_the_same_validation(string value, double expectedSeconds)
+    {
+        MonitorSettings applied = CommandLineOverrides.Parse(["--interval-seconds", value]).ApplyTo(new MonitorSettings());
+
+        Assert.Equal(TimeSpan.FromSeconds(expectedSeconds), applied.SampleInterval);
     }
 
     [Fact]

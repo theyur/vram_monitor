@@ -14,7 +14,7 @@ public sealed record MonitorSettings
     /// Floor on the sample interval. Together with <see cref="MaxHistoryWindow"/> this bounds how many
     /// samples the rolling store can hold, and therefore the cost of a single analysis pass.
     /// </summary>
-    public static readonly TimeSpan MinSampleInterval = TimeSpan.FromSeconds(2);
+    public static readonly TimeSpan MinSampleInterval = TimeSpan.FromSeconds(1);
 
     /// <summary>Ceiling on the history window. See <see cref="MinSampleInterval"/>.</summary>
     public static readonly TimeSpan MaxHistoryWindow = TimeSpan.FromHours(12);

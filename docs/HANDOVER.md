@@ -231,7 +231,13 @@ These are the things I could not verify without a human at the keyboard:
 - Per-item `Partial` statuses never occurred naturally in any run, so their real-world frequency is unknown.
   If they turn out to be common, the chart could accumulate `Partial sample` markers.
 - The chart is rebuilt from scratch each cycle. At the default 10 s interval with ten series this is
-  comfortable; at a 2 s interval with a 12-hour window it has not been profiled.
+  comfortable. Profiled on 2026-10-10 at the new 1 s floor (Release, synthetic histories with 60
+  applications / 69 processes, 24-thread desktop): the UI side keeps up everywhere measured -- chart build
+  2–6 ms at 60 min and 14–38 ms at 12 h, a real `PlotView` refresh about 15 ms at 60 min and 320 ms at
+  12 h × chart-top-N 50, no dispatcher backlog over 30 s. **The sampler side does not keep up at 12 h:**
+  analysis of 43,000 retained samples takes 1.3–1.5 s per cycle, so a 1 s interval with a 12-hour window
+  runs at roughly one cycle per 1.4 s (late cycles counted in monitor health). Fixing that needs
+  incremental analysis, not a tuning pass.
 
 ---
 
